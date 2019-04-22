@@ -1,264 +1,154 @@
-import React, { Component } from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import React from "react";
+import { getDefaultState, checkForWinningCondition } from "./lib/helpers.js";
+import { reverseCurrentSymbol } from "./lib/helpers.js";
+import { MovesOutput, DeleteMove } from "./components/SmallComponents.js";
+import StartingDecisions from "./components/StartingDecisions.js";
+import ReplayControls from "./components/ReplayControls.js";
+import Field from "./components/Field.js";
 
-function getDefaultState() {
-  return {
-    board: [[[], [], []], [[], [], []], [[], [], []]],
-    moves: [],
-    currentSymbol: "",
-    gameOver: false,
-    playerNumber: 0
-  };
-}
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
-    this.handleClick = this.handleClick.bind(this);
-    this.resetGame = this.resetGame.bind(this);
-    this.removeLastTurn = this.removeLastTurn.bind(this);
-    this.handleStartDecision = this.handleStartDecision.bind(this);
   }
-  handleClick(pressedButtonIdentifier) {
-    if (this.state.gameOver) {
+  handleClick = ({ x, y }) => {
+    if (this.state.gameOver || this.state.board[x][y]) {
       return;
     }
-    let stateCopy = Object.assign({}, this.state);
-    if (
-      stateCopy.board[Math.floor(pressedButtonIdentifier / 3)][
-        pressedButtonIdentifier % 3
-      ] === "X" ||
-      stateCopy.board[Math.floor(pressedButtonIdentifier / 3)][
-        pressedButtonIdentifier % 3
-      ] === "O"
-    ) {
-    } else {
-      stateCopy.moves.push([pressedButtonIdentifier, stateCopy.currentSymbol]);
-      stateCopy.board[Math.floor(pressedButtonIdentifier / 3)][
-        pressedButtonIdentifier % 3
-      ] = stateCopy.currentSymbol;
-      if (checkForWinningCondition(stateCopy.board)[0]) {
-        stateCopy.gameOver = true;
-      }
-      stateCopy.currentSymbol = reverseCurrentSymbol(stateCopy.currentSymbol);
-      this.setState(stateCopy);
+    let copy = Object.assign({}, this.state);
+    let symbol = copy.currentSymbol;
+    copy.board[x][y] = symbol;
+    copy.gameOver = checkForWinningCondition(copy.board)[0];
+    copy.moves.push({ symbol, x, y });
+    copy.currentSymbol = reverseCurrentSymbol(symbol);
+    this.setState(copy);
+  };
+  decidePlayerNumber = decision => {
+    this.setState({ playerNumber: decision });
+    if (decision === 2) {
+      this.startGame();
     }
-  }
-  handleStartDecision(decision) {
-    if (typeof decision === "string") {
-      this.setState({ currentSymbol: decision });
-    } else {
-      this.setState({ playerNumber: decision });
-    }
-  }
-  removeLastTurn() {
+  };
+  decideSymbol = decision => {
+    //this.setState({ currentSymbol: decision });
+    this.startGame();
+  };
+  startGame = () => {
+    this.setState({ setup: false });
+  };
+  removeLastTurn = () => {
     if (this.state.moves.length > 0) {
-      let stateCopy = Object.assign({}, this.state);
-      let row = Math.floor(stateCopy.moves[stateCopy.moves.length - 1][0] / 3);
-      let col = Math.floor(stateCopy.moves[stateCopy.moves.length - 1][0] % 3);
-      stateCopy.board[row][col] = [];
-      stateCopy.moves.pop();
-      stateCopy.currentSymbol = reverseCurrentSymbol(stateCopy.currentSymbol);
-      stateCopy.gameOver = false;
-      this.setState(stateCopy);
+      let copy = Object.assign({}, this.state);
+      let move = copy.moves[copy.moves.length - 1];
+      copy.board[move.x][move.y] = "";
+      copy.moves.pop();
+      copy.currentSymbol = reverseCurrentSymbol(copy.currentSymbol);
+      copy.gameOver = false;
+      this.setState(copy);
     }
-  }
-  resetGame() {
+  };
+  resetGame = () => {
     this.setState(getDefaultState());
-  }
+  };
   render() {
-    return this.state.currentSymbol === "" || this.state.playerNumber === 0 ? (
-      <StartingDecisions
-        currentSymbol={this.state.currentSymbol}
-        playerNumber={this.state.playerNumber}
-        makeDecision={this.handleStartDecision}
-      />
-    ) : (
-      <div id="main-container">
-        <RemoveTurnControls removeLastTurn={this.removeLastTurn} />
-        <div id="field-grid">
-          <Fields
-            handleClick={this.handleClick}
-            board={this.state.board}
-            gameOver={this.state.gameOver}
+    return (
+      <div>
+        {this.state.setup ? (
+          <StartingDecisions
             currentSymbol={this.state.currentSymbol}
+            playerNumber={this.state.playerNumber}
+            decidePlayerNumber={this.decidePlayerNumber}
+            decideSymbol={this.decideSymbol}
+            startGame={this.startGame}
           />
-        </div>
-        <MovesOutput moves={this.state.moves} />
-        <ReplayControls
-          currentSymbol={this.state.currentSymbol}
-          gameOver={this.state.gameOver}
-          moves={this.state.moves}
-          resetGame={this.resetGame}
-        />
+        ) : (
+          <div id="main-container">
+            <div id="field-grid">
+              {this.state.board.map((row, x) =>
+                row.map((field, y) => (
+                  <Field
+                    key={x + "," + y}
+                    handleClick={
+                      this.state.board[x][y] ? x => x : this.handleClick
+                    }
+                    symbol={this.state.currentSymbol}
+                    field={{ x, y }}
+                    content={field}
+                    winningPosition={checkForWinningCondition(this.state.board)}
+                  />
+                ))
+              )}
+            </div>
+            <DeleteMove removeLastTurn={this.removeLastTurn} />
+            <MovesOutput moves={this.state.moves} />
+            <ReplayControls
+              currentSymbol={this.state.currentSymbol}
+              gameOver={this.state.gameOver}
+              moves={this.state.moves}
+              resetGame={this.resetGame}
+            />
+          </div>
+        )}
+        <style jsx global>
+          {`
+            button {
+              margin: 1em;
+              border: none;
+              padding: 1em;
+            }
+            body {
+              margin: 0;
+              font-size: calc(
+                14px + (26 - 14) * ((100vw - 300px) / (1600 - 300))
+              );
+              line-height: calc(
+                1.3em + (1.5 - 1.2) * ((100vw - 300px) / (1600 - 300))
+              );
+            }
+          `}
+        </style>
+        <style jsx>
+          {`
+            #field-grid {
+              width: 80vmin;
+              height: 80vmin;
+              display: grid;
+              grid-template-rows: 1fr 1fr 1fr;
+              grid-template-columns: 1fr 1fr 1fr;
+            }
+            #main-container {
+              text-align: center;
+              align-items: center;
+              display: flex;
+              flex-direction: column;
+            }
+            #field-grid button {
+              font-size: 10vh;
+              border: 0.05em solid black;
+              margin: 0;
+              padding: 0;
+            }
+            #field-grid {
+              border: 0.1em solid black;
+            }
+            #replay-controls {
+              width: 30%;
+              display: flex;
+              justify-content: center;
+            }
+            .hoverButtons:hover {
+              background: lightcoral;
+            }
+            .winning-field {
+              background: crimson !important;
+            }
+            .noHover {
+              pointer-events: none;
+            }
+          `}
+        </style>
       </div>
     );
   }
 }
-function reverseCurrentSymbol(currentSymbol) {
-  currentSymbol === "X" ? (currentSymbol = "O") : (currentSymbol = "X");
-  return currentSymbol;
-}
-function checkForWinningCondition(board) {
-  for (let i = 0; i < 3; i++) {
-    if (board[i][0] === board[i][1] && board[i][1] === board[i][2]) {
-      return [true, "row", i];
-    }
-  }
-  for (let j = 0; j < 3; j++) {
-    if (board[0][j] === board[1][j] && board[1][j] === board[2][j]) {
-      return [true, "col", j];
-    }
-  }
-  if (board[0][0] === board[1][1] && board[1][1] == board[2][2]) {
-    return [true, "diagonal-1"];
-  }
-  if (board[0][2] === board[1][1] && board[1][1] == board[2][0]) {
-    return [true, "diagonal-2"];
-  }
-  return [false];
-}
-
-function StartingDecisions(props) {
-  if (props.currentSymbol === "") {
-    return (
-      <div id="decision-button-container">
-        Do you want to play{" "}
-        <button className="X" onClick={() => props.makeDecision("X")}>
-          X
-        </button>{" "}
-        or{" "}
-        <button className="O" onClick={() => props.makeDecision("O")}>
-          O
-        </button>{" "}
-        ?
-      </div>
-    );
-  }
-  if (props.playerNumber === 0) {
-    return (
-      <div id="decision-button-container">
-        How many players?{" "}
-        <button className="O" onClick={() => props.makeDecision(1)}>
-          1
-        </button>{" "}
-        or{" "}
-        <button className="X" onClick={() => props.makeDecision(2)}>
-          2
-        </button>{" "}
-        ?
-      </div>
-    );
-  }
-}
-function RemoveTurnControls(props) {
-  return (
-    <button className="hoverButtons" onClick={props.removeLastTurn}>
-      Delete last move!
-    </button>
-  );
-}
-function ReplayControls(props) {
-  return (
-    <div id="replay-controls">
-      {props.gameOver ? (
-        <div>
-          <div>Player {props.currentSymbol === "X" ? "O" : "X"} won</div>
-          <button className="hoverButtons" onClick={() => props.resetGame()}>
-            Start a new game?
-          </button>
-        </div>
-      ) : props.moves.length === 9 ? (
-        <div>
-          <div>It was a tie!</div>
-          <button className="hoverButtons" onClick={() => props.resetGame()}>
-            Replay
-          </button>
-        </div>
-      ) : (
-        <div>Player {props.currentSymbol} is moving</div>
-      )}{" "}
-    </div>
-  );
-}
-function MovesOutput(props) {
-  return <p>Moves: {props.moves.map(e => e.join("")).join(", ")}</p>;
-}
-function Fields(props) {
-  let buttons = [];
-  let winningCondition = checkForWinningCondition(props.board);
-  for (let i = 0; i < 9; i++) {
-    let classes = [];
-    props.board[Math.floor(i / 3)][i % 3] === "X"
-      ? classes.push("X")
-      : props.board[Math.floor(i / 3)][i % 3] === "O"
-      ? classes.push("O")
-      : classes.push("hover" + props.currentSymbol);
-    if (winningCondition[0] === true) {
-      classes.push("noHover");
-      for (let k = 0; k < 3; k++) {
-        switch (winningCondition[1]) {
-          case "col":
-            i === k * 3 + winningCondition[2]
-              ? classes.push("winning-field")
-              : null;
-            break;
-          case "row":
-            i === 3 * winningCondition[2] + k
-              ? classes.push("winning-field")
-              : null;
-            break;
-          case "diagonal-1":
-            i === 0 || i === 4 || i === 8
-              ? classes.push("winning-field")
-              : null;
-            break;
-          case "diagonal-2":
-            i === 2 || i === 4 || i === 6
-              ? classes.push("winning-field")
-              : null;
-            break;
-          default:
-            break;
-        }
-      }
-    }
-    buttons.push(
-      <button
-        id={i}
-        className={classes.join(" ")}
-        onClick={() => props.handleClick(i)}
-      >
-        {props.board[Math.floor(i / 3)][i % 3]}
-      </button>
-    );
-  }
-  return buttons;
-}
-ReactDOM.render(<App />, document.getElementById("root"));
-
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
-  }
-}
-
 export default App;
