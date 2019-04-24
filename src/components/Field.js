@@ -1,9 +1,11 @@
 import React from "react";
 
-const Field = ({ symbol, handleClick, field, content, winningPosition }) => {
-  console.log(winningPosition);
+const Field = ({ symbol, handleClick, field, content, winning }) => {
   return (
-    <div className={content + " tile"} onClick={() => handleClick(field)}>
+    <div
+      className={content + " tile " + (winning ? "winning" : "")}
+      onClick={() => handleClick(field)}
+    >
       {content ? (
         content === "X" ? (
           <i className="fas fa-times" />
@@ -16,16 +18,13 @@ const Field = ({ symbol, handleClick, field, content, winningPosition }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px solid black;
+          background: white;
         }
         i {
           font-size: 4em;
         }
-        .X {
-          background: lightgreen;
-        }
-        .O {
-          background: lightblue;
+        .winning {
+          background: red;
         }
       `}</style>
     </div>
@@ -33,25 +32,25 @@ const Field = ({ symbol, handleClick, field, content, winningPosition }) => {
 };
 /*
   let buttons = [];
-  let winningCondition = checkForWinningCondition(board);
+  let winningCombination = getWinningCombination(board);
   for (let i = 0; i < 9; i++) {
     let classes = [];
     board[Math.floor(i / 3)][i % 3] === "X"
       ? classes.push("X")
       : board[Math.floor(i / 3)][i % 3] === "O"
       ? classes.push("O")
-      : classes.push("hover" + currentSymbol);
-    if (winningCondition[0] === true) {
+      : classes.push("hover" + symbol);
+    if (winningCombination[0] === true) {
       classes.push("noHover");
       for (let k = 0; k < 3; k++) {
-        switch (winningCondition[1]) {
+        switch (winningCombination[1]) {
           case "col":
-            i === k * 3 + winningCondition[2]
+            i === k * 3 + winningCombination[2]
               ? classes.push("winning-field")
               : null;
             break;
           case "row":
-            i === 3 * winningCondition[2] + k
+            i === 3 * winningCombination[2] + k
               ? classes.push("winning-field")
               : null;
             break;

@@ -1,10 +1,12 @@
 import React from "react";
-import { getDefaultState, checkForWinningCondition } from "./lib/helpers.js";
-import { reverseCurrentSymbol } from "./lib/helpers.js";
-import { MovesOutput, DeleteMove } from "./components/SmallComponents.js";
+import { getDefaultState, getWinningCombination } from "./lib/helpers.js";
+import { reverseSymbol, getXAndYofAIMove } from "./lib/helpers.js";
 import StartingDecisions from "./components/StartingDecisions.js";
 import ReplayControls from "./components/ReplayControls.js";
 import Field from "./components/Field.js";
+import { minMax } from "./lib/minMax.js";
+let { board, symbol } = getDefaultState();
+minMax(symbol, board);
 
 class App extends React.Component {
   constructor(props) {
@@ -12,16 +14,40 @@ class App extends React.Component {
     this.state = getDefaultState();
   }
   handleClick = ({ x, y }) => {
-    if (this.state.gameOver || this.state.board[x][y]) {
+    if (this.state.gameOver.length > 0 || this.state.board[x][y]) {
       return;
     }
+    if (this.state.ai) {
+      this.aiMove(x, y);
+    } else {
+      this.move({ x, y }, this.state.symbol);
+      this.changeTurns();
+    }
+  };
+  async aiMove(x, y) {
+    if (this.state.symbol === reverseSymbol(this.state.ai)) {
+      await this.move({ x, y }, this.state.symbol);
+      await this.changeTurns();
+    }
+    if (
+      this.state.moves.length < 9 &&
+      getWinningCombination(this.state.board).length === 0
+    ) {
+      await this.move(getXAndYofAIMove(this.state.board), this.state.symbol);
+      await this.changeTurns();
+    }
+  }
+  changeTurns = () => {
+    this.setState({
+      symbol: reverseSymbol(this.state.symbol)
+    });
+  };
+  move = ({ x, y }, symbol) => {
     let copy = Object.assign({}, this.state);
-    let symbol = copy.currentSymbol;
     copy.board[x][y] = symbol;
-    copy.gameOver = checkForWinningCondition(copy.board)[0];
+    copy.gameOver = getWinningCombination(copy.board);
     copy.moves.push({ symbol, x, y });
-    copy.currentSymbol = reverseCurrentSymbol(symbol);
-    this.setState(copy);
+    this.setState(() => copy);
   };
   decidePlayerNumber = decision => {
     this.setState({ playerNumber: decision });
@@ -30,63 +56,65 @@ class App extends React.Component {
     }
   };
   decideSymbol = decision => {
-    //this.setState({ currentSymbol: decision });
     this.startGame();
+    this.setState(
+      () => ({
+        ai: reverseSymbol(decision)
+      }),
+      () => {
+        if (decision === "O") {
+          this.aiMove();
+        }
+      }
+    );
   };
   startGame = () => {
     this.setState({ setup: false });
-  };
-  removeLastTurn = () => {
-    if (this.state.moves.length > 0) {
-      let copy = Object.assign({}, this.state);
-      let move = copy.moves[copy.moves.length - 1];
-      copy.board[move.x][move.y] = "";
-      copy.moves.pop();
-      copy.currentSymbol = reverseCurrentSymbol(copy.currentSymbol);
-      copy.gameOver = false;
-      this.setState(copy);
-    }
   };
   resetGame = () => {
     this.setState(getDefaultState());
   };
   render() {
+    let winning = getWinningCombination(this.state.board);
     return (
       <div>
         {this.state.setup ? (
           <StartingDecisions
-            currentSymbol={this.state.currentSymbol}
+            symbol={this.state.symbol}
             playerNumber={this.state.playerNumber}
             decidePlayerNumber={this.decidePlayerNumber}
             decideSymbol={this.decideSymbol}
             startGame={this.startGame}
           />
         ) : (
-          <div id="main-container">
-            <div id="field-grid">
-              {this.state.board.map((row, x) =>
-                row.map((field, y) => (
-                  <Field
-                    key={x + "," + y}
-                    handleClick={
-                      this.state.board[x][y] ? x => x : this.handleClick
-                    }
-                    symbol={this.state.currentSymbol}
-                    field={{ x, y }}
-                    content={field}
-                    winningPosition={checkForWinningCondition(this.state.board)}
-                  />
-                ))
-              )}
-            </div>
-            <DeleteMove removeLastTurn={this.removeLastTurn} />
-            <MovesOutput moves={this.state.moves} />
+          <div id="container">
             <ReplayControls
-              currentSymbol={this.state.currentSymbol}
+              symbol={this.state.symbol}
               gameOver={this.state.gameOver}
               moves={this.state.moves}
               resetGame={this.resetGame}
+              ai={this.state.ai}
             />
+            <div id="field-grid-background">
+              <div id="field-grid">
+                {this.state.board.map((row, x) =>
+                  row.map((field, y) => {
+                    return (
+                      <Field
+                        key={x + "," + y}
+                        handleClick={
+                          this.state.board[x][y] ? x => x : this.handleClick
+                        }
+                        symbol={this.state.symbol}
+                        field={{ x, y }}
+                        content={field}
+                        winning={winning.includes("" + x + y)}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         )}
         <style jsx global>
@@ -107,46 +135,33 @@ class App extends React.Component {
             }
           `}
         </style>
-        <style jsx>
-          {`
-            #field-grid {
-              width: 80vmin;
-              height: 80vmin;
-              display: grid;
-              grid-template-rows: 1fr 1fr 1fr;
-              grid-template-columns: 1fr 1fr 1fr;
-            }
-            #main-container {
-              text-align: center;
-              align-items: center;
-              display: flex;
-              flex-direction: column;
-            }
-            #field-grid button {
-              font-size: 10vh;
-              border: 0.05em solid black;
-              margin: 0;
-              padding: 0;
-            }
-            #field-grid {
-              border: 0.1em solid black;
-            }
-            #replay-controls {
-              width: 30%;
-              display: flex;
-              justify-content: center;
-            }
-            .hoverButtons:hover {
-              background: lightcoral;
-            }
-            .winning-field {
-              background: crimson !important;
-            }
-            .noHover {
-              pointer-events: none;
-            }
-          `}
-        </style>
+        <style jsx>{`
+          #container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          #field-grid-background {
+            width: 80vmin;
+            height: 80vmin;
+            background: black;
+          }
+          #field-grid {
+            width: 80vmin;
+            height: 80vmin;
+            display: grid;
+            grid-template-rows: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-gap: 2px;
+          }
+        `}</style>
       </div>
     );
   }
