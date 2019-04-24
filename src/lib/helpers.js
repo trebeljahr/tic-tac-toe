@@ -49,30 +49,7 @@ const getDefaultState = () => {
     gameOver: false
   };
 };
-var b = [];
-export const minMax = (board, symbol, originalSymbol, a) => {
-  board.forEach((tile, x) => {
-    tile.forEach((content, y) => {
-      a = a + 1;
-      //console.log(a);
-      if (content === "") {
-        board[x][y] = symbol;
-      }
-      if (getWinningCombination(board).length > 0) {
-        b.push(getWinningCombination(board));
-      }
-      if (a < 9) {
-        minMax(board, reverseSymbol(symbol), symbol, a);
-      }
-    });
-  });
-  console.log(b);
-};
 const getXAndYofAIMove = (board, symbol) => {
-  if (random(1)) {
-    console.log("Hello");
-  } else {
-  }
   let x = random(2);
   let y = random(2);
   if (board[x][y] !== "") {
@@ -81,10 +58,6 @@ const getXAndYofAIMove = (board, symbol) => {
     return { x, y };
   }
 };
-
-/*const chance = c => {
-  return random(100) >= c;
-};*/
 
 export const random = n => {
   return Math.floor(Math.random() * (n + 1));

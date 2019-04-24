@@ -1,13 +1,10 @@
 import React from "react";
 import { getDefaultState, getWinningCombination } from "./lib/helpers.js";
-import { reverseSymbol, getXAndYofAIMove } from "./lib/helpers.js";
+import { reverseSymbol } from "./lib/helpers.js";
 import StartingDecisions from "./components/StartingDecisions.js";
 import ReplayControls from "./components/ReplayControls.js";
 import Field from "./components/Field.js";
-import { minMax } from "./lib/minMax.js";
-let { board, symbol } = getDefaultState();
-minMax(symbol, board);
-
+import { generateMove } from "./lib/generateMove.js";
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -33,7 +30,10 @@ class App extends React.Component {
       this.state.moves.length < 9 &&
       getWinningCombination(this.state.board).length === 0
     ) {
-      await this.move(getXAndYofAIMove(this.state.board), this.state.symbol);
+      await this.move(
+        generateMove(this.state.board, this.state.ai),
+        this.state.symbol
+      );
       await this.changeTurns();
     }
   }
