@@ -1,3 +1,4 @@
+//Tic Tac Toe Game!
 import React from "react";
 import { getDefaultState, getWinningCombination } from "./lib/helpers.js";
 import { reverseSymbol } from "./lib/helpers.js";
