@@ -59,15 +59,15 @@ jobs:
         run: npx --yes "$WRANGLER" triggers deploy
 
       - name: Verify the released version
-        env:
-          SITE_URL: https://tic-tac-toe.ricoslabs.workers.dev
         run: |
-          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$SITE_URL/version.json" -o "$RUNNER_TEMP/version.json"
-          node -e 'const v=require(process.argv[1]); if(v.sha!==process.env.GITHUB_SHA)throw new Error("Wrong deployed version")' "$RUNNER_TEMP/version.json"
-          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$SITE_URL/" -o "$RUNNER_TEMP/home.html"
+          for site_url in https://tic-tac-toe.ricoslabs.workers.dev https://ttt.trebeljahr.com https://tictactoe.trebeljahr.com; do
+            curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$site_url/version.json" -o "$RUNNER_TEMP/version.json"
+            node -e 'const v=require(process.argv[1]); if(v.sha!==process.env.GITHUB_SHA)throw new Error("Wrong deployed version")' "$RUNNER_TEMP/version.json"
+            curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$site_url/" -o "$RUNNER_TEMP/home.html"
+          done
 
       - name: Record the web deploy
         uses: ./.github/actions/record-ship
         with:
           environment: web
-          url: https://tic-tac-toe.ricoslabs.workers.dev
+          url: https://ttt.trebeljahr.com

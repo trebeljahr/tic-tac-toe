@@ -2,7 +2,7 @@
 
 Play against the computer or a second player in the same browser.
 
-Deployment target: https://ttt.trebeljahr.com (also https://tictactoe.trebeljahr.com)
+Live site: https://ttt.trebeljahr.com (also https://tictactoe.trebeljahr.com)
 
 ## Run locally
 
@@ -21,7 +21,7 @@ The build produces `dist/` with local JavaScript, CSS, icons, security headers a
 
 ## Deployment
 
-Hatchkit recognizes `.hatchkit.json` as a static project with a repo-owned Cloudflare release. Pushes to the existing GitHub `master` branch build and test the game, upload a Worker version, activate it, verify the preview and record the deployment. Local `main` tracks `origin/master`.
+Hatchkit recognizes `.hatchkit.json` as a static project with a repo-owned Cloudflare release. Pushes to the existing GitHub `master` branch build and test the game, upload a Worker version, activate it, verify preview and production hostnames, and record the deployment. Local `main` tracks `origin/master`.
 
 The GitHub repository holds only its per-Worker deployment token and account ID. Hatchkit's operator credential stays local. Provision the custom domain separately through Hatchkit; keep routes out of the CI Wrangler config.
 
