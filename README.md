@@ -28,3 +28,5 @@ The GitHub repository holds only its per-Worker deployment token and account ID.
 Rollback uses a previously uploaded version: `wrangler versions list`, followed by `wrangler versions deploy <version-id>@100% --yes`. This preserves the domain binding.
 
 The migration preserves the original layout and AI strategy. Turn updates are atomic, and the AI can only choose empty squares.
+
+The homepage sends `Cache-Control: no-transform` to prevent automatic edge script injection. Asset compression remains enabled; the content policy permits only local scripts.
