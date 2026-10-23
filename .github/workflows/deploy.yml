@@ -61,8 +61,20 @@ jobs:
       - name: Verify the released version
         run: |
           for site_url in https://tic-tac-toe.ricoslabs.workers.dev https://ttt.trebeljahr.com https://tictactoe.trebeljahr.com; do
-            curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$site_url/version.json" -o "$RUNNER_TEMP/version.json"
-            node -e 'const v=require(process.argv[1]); if(v.sha!==process.env.GITHUB_SHA)throw new Error("Wrong deployed version")' "$RUNNER_TEMP/version.json"
+            verified=false
+            for attempt in {1..12}; do
+              if curl --fail --silent --show-error --max-time 15 "$site_url/version.json" -o "$RUNNER_TEMP/version.json" &&
+                node -e 'const v=require(process.argv[1]); process.exit(v.sha===process.env.GITHUB_SHA ? 0 : 1)' "$RUNNER_TEMP/version.json"; then
+                verified=true
+                break
+              fi
+              echo "Waiting for $site_url to serve $GITHUB_SHA (attempt $attempt/12)"
+              sleep 5
+            done
+            if [ "$verified" != true ]; then
+              echo "Expected release did not reach $site_url"
+              exit 1
+            fi
             curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 30 "$site_url/" -o "$RUNNER_TEMP/home.html"
           done
 
