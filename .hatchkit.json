@@ -4,8 +4,10 @@
   "scaffoldedAt": "2026-10-23T05:30:00.000Z",
   "name": "tic-tac-toe",
   "description": "Tic-tac-toe against the computer or a second player",
-  "domain": "tic-tac-toe.trebeljahr.com",
-  "aliases": [],
+  "domain": "ttt.trebeljahr.com",
+  "aliases": [
+    "tictactoe.trebeljahr.com"
+  ],
   "features": [],
   "surfaces": "static",
   "deploymentMode": "cloudflare",

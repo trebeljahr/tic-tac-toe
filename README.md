@@ -2,7 +2,7 @@
 
 Play against the computer or a second player in the same browser.
 
-Deployment target: https://tic-tac-toe.trebeljahr.com
+Deployment target: https://ttt.trebeljahr.com (also https://tictactoe.trebeljahr.com)
 
 ## Run locally
 
