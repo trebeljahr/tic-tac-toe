@@ -46,21 +46,12 @@ const getDefaultState = () => {
     ai: false,
     playerNumber: 0,
     setup: true,
-    gameOver: false
+    gameOver: []
   };
 };
-const getXAndYofAIMove = (board, symbol) => {
-  let x = random(2);
-  let y = random(2);
-  if (board[x][y] !== "") {
-    return getXAndYofAIMove(board, symbol);
-  } else {
-    return { x, y };
-  }
-};
-
-export const random = n => {
-  return Math.floor(Math.random() * (n + 1));
+const getXAndYofAIMove = (board, randomValue) => {
+  const empty = board.flatMap((row, x) => row.flatMap((cell, y) => cell === "" ? [{ x, y }] : []));
+  return empty[Math.floor(randomValue * empty.length)];
 };
 
 export {

@@ -1,10 +1,10 @@
-import { getXAndYofAIMove, reverseSymbol, random } from "./helpers.js";
-export const generateMove = (board, symbol) => {
+import { getXAndYofAIMove, reverseSymbol } from "./helpers.js";
+export const generateMove = (board, symbol, randomValue = 0) => {
   return (
     checks(board, symbol) ||
     checks(board, reverseSymbol(symbol)) ||
-    middleOrCorner(board, reverseSymbol(symbol)) ||
-    getXAndYofAIMove(board, symbol)
+    middleOrCorner(board, reverseSymbol(symbol), randomValue) ||
+    getXAndYofAIMove(board, randomValue)
   );
 };
 
@@ -102,7 +102,7 @@ const checks = (board, symbol) => {
     }
   }
 };
-const middleOrCorner = (board, symbol) => {
+const middleOrCorner = (board, symbol, randomValue) => {
   if (
     (board[0][0] === symbol ||
       board[0][2] === symbol ||
@@ -113,17 +113,8 @@ const middleOrCorner = (board, symbol) => {
     return { x: 1, y: 1 };
   }
   if (board[1][1] === symbol) {
-    switch (random(4)) {
-      case 1:
-        return { x: 2, y: 2 };
-      case 2:
-        return { x: 0, y: 2 };
-      case 3:
-        return { x: 2, y: 0 };
-      case 4:
-        return { x: 0, y: 0 };
-      default:
-        break;
-    }
+    const corners = [{ x: 2, y: 2 }, { x: 0, y: 2 }, { x: 2, y: 0 }, { x: 0, y: 0 }]
+      .filter(({ x, y }) => board[x][y] === "");
+    return corners[Math.floor(randomValue * corners.length)];
   }
 };
